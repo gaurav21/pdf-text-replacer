@@ -140,14 +140,21 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                                     replacements_count += 1
                                     break
 
-            # Perform replacements
+            # First, redact (remove) all old text
+            for repl in replacements:
+                rect = repl['rect']
+                page.add_redact_annot(rect)
+
+            # Apply redactions to actually remove the text
+            page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE)
+
+            # Then, insert new text with background-aware positioning
             for repl in replacements:
                 rect = repl['rect']
                 bg_color = sample_background_color(page, rect)
 
-                # Cover old text with background color
-                cover_rect = fitz.Rect(rect.x0 - 1, rect.y0, rect.x1 + 1, rect.y1)
-                page.draw_rect(cover_rect, color=bg_color, fill=bg_color)
+                # Fill the redacted area with background color
+                page.draw_rect(rect, color=bg_color, fill=bg_color)
 
                 # Insert new text
                 page.insert_text(

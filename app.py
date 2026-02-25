@@ -156,13 +156,25 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                 # Fill the redacted area with background color
                 page.draw_rect(rect, color=bg_color, fill=bg_color)
 
-                # Insert new text
+                # Calculate font size to fit the new text in the same width
+                old_width = rect.width
+                fontsize = repl['size']
+                fontname = repl['fontname']
+
+                # Calculate text width with current font size
+                text_width = fitz.get_text_length(replace_text, fontname=fontname, fontsize=fontsize)
+
+                # Scale font size if text is too wide
+                if text_width > old_width:
+                    fontsize = fontsize * (old_width / text_width) * 0.95  # 95% to add small margin
+
+                # Insert new text with adjusted size
                 page.insert_text(
                     (rect.x0, rect.y1 - 2),
                     replace_text,
-                    fontsize=repl['size'],
+                    fontsize=fontsize,
                     color=repl['color'],
-                    fontname=repl['fontname']
+                    fontname=fontname
                 )
 
     # Save to bytes

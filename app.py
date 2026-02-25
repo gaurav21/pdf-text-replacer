@@ -140,21 +140,10 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                                     replacements_count += 1
                                     break
 
-            # First, redact (remove) all old text
-            for repl in replacements:
-                rect = repl['rect']
-                page.add_redact_annot(rect)
-
-            # Apply redactions to actually remove the text
-            page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE)
-
-            # Then, insert new text with background-aware positioning
+            # Perform replacements using a Preview-compatible approach
             for repl in replacements:
                 rect = repl['rect']
                 bg_color = sample_background_color(page, rect)
-
-                # Fill the redacted area with background color
-                page.draw_rect(rect, color=bg_color, fill=bg_color)
 
                 # Calculate font size to fit the new text in the same width
                 old_width = rect.width
@@ -168,13 +157,24 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                 if text_width > old_width:
                     fontsize = fontsize * (old_width / text_width) * 0.95  # 95% to add small margin
 
-                # Insert new text with adjusted size
+                # Cover old text with multiple layers for better coverage
+                # Extend slightly beyond text bounds
+                cover_rect = fitz.Rect(rect.x0 - 2, rect.y0 - 1, rect.x1 + 2, rect.y1 + 1)
+
+                # Draw white rectangle first (base layer)
+                page.draw_rect(cover_rect, color=(1, 1, 1), fill=(1, 1, 1), overlay=False)
+
+                # Then draw background color on top
+                page.draw_rect(cover_rect, color=bg_color, fill=bg_color, overlay=True)
+
+                # Insert new text with overlay flag
                 page.insert_text(
                     (rect.x0, rect.y1 - 2),
                     replace_text,
                     fontsize=fontsize,
                     color=repl['color'],
-                    fontname=fontname
+                    fontname=fontname,
+                    overlay=True
                 )
 
     # Save to bytes

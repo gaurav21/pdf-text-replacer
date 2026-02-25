@@ -140,7 +140,17 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                                     replacements_count += 1
                                     break
 
-            # Perform replacements using a Preview-compatible approach
+            # Clean content stream first - remove text in those areas
+            for repl in replacements:
+                rect = repl['rect']
+                # Add redaction annotation (marks area for removal)
+                page.add_redact_annot(rect, fill=(1, 1, 1))
+
+            # Apply redactions with white fill
+            if replacements:
+                page.apply_redactions()
+
+            # Now add replacements with background-colored rectangles and new text
             for repl in replacements:
                 rect = repl['rect']
                 bg_color = sample_background_color(page, rect)
@@ -157,28 +167,20 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                 if text_width > old_width:
                     fontsize = fontsize * (old_width / text_width) * 0.95  # 95% to add small margin
 
-                # Cover old text with multiple layers for better coverage
-                # Extend slightly beyond text bounds
-                cover_rect = fitz.Rect(rect.x0 - 2, rect.y0 - 1, rect.x1 + 2, rect.y1 + 1)
+                # Draw background color rectangle
+                page.draw_rect(rect, color=bg_color, fill=bg_color)
 
-                # Draw white rectangle first (base layer)
-                page.draw_rect(cover_rect, color=(1, 1, 1), fill=(1, 1, 1), overlay=False)
-
-                # Then draw background color on top
-                page.draw_rect(cover_rect, color=bg_color, fill=bg_color, overlay=True)
-
-                # Insert new text with overlay flag
+                # Insert new text at the same position
                 page.insert_text(
                     (rect.x0, rect.y1 - 2),
                     replace_text,
                     fontsize=fontsize,
                     color=repl['color'],
-                    fontname=fontname,
-                    overlay=True
+                    fontname=fontname
                 )
 
-    # Save to bytes
-    output_bytes = doc.write(garbage=4, deflate=True, pretty=True)
+    # Save to bytes with clean option
+    output_bytes = doc.write(garbage=4, deflate=True, clean=True)
     doc.close()
 
     return output_bytes, replacements_count

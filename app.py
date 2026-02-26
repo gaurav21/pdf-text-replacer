@@ -179,8 +179,16 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                     fontname=fontname
                 )
 
-    # Save to bytes with clean option
-    output_bytes = doc.write(garbage=4, deflate=True, clean=True)
+    # Save to bytes with compatibility options for Preview
+    # expand=True flattens content for better Preview compatibility
+    output_bytes = doc.write(
+        garbage=4,
+        deflate=True,
+        clean=True,
+        pretty=False,
+        linear=False,
+        expand=True  # Flatten content for Preview compatibility
+    )
     doc.close()
 
     return output_bytes, replacements_count

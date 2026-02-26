@@ -143,17 +143,19 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
             # Clean content stream first - remove text in those areas
             for repl in replacements:
                 rect = repl['rect']
-                # Add redaction annotation (marks area for removal)
-                page.add_redact_annot(rect, fill=(1, 1, 1))
+                bg_color = sample_background_color(page, rect)
+                # Add redaction annotation with background color (no border)
+                # Extend slightly to ensure complete coverage
+                extended_rect = fitz.Rect(rect.x0 - 1, rect.y0 - 1, rect.x1 + 1, rect.y1 + 1)
+                page.add_redact_annot(extended_rect, fill=bg_color)
 
-            # Apply redactions with white fill
+            # Apply redactions to remove original text
             if replacements:
-                page.apply_redactions()
+                page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE)
 
-            # Now add replacements with background-colored rectangles and new text
+            # Now add replacement text (background already filled by redaction)
             for repl in replacements:
                 rect = repl['rect']
-                bg_color = sample_background_color(page, rect)
 
                 # Calculate font size to fit the new text in the same width
                 old_width = rect.width
@@ -166,10 +168,6 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                 # Scale font size if text is too wide
                 if text_width > old_width:
                     fontsize = fontsize * (old_width / text_width) * 0.95  # 95% to add small margin
-
-                # Draw background color rectangle WITHOUT border
-                # width=0 means no border/stroke, only fill
-                page.draw_rect(rect, color=bg_color, fill=bg_color, width=0)
 
                 # Insert new text at the same position
                 # Use the same baseline calculation as the original text

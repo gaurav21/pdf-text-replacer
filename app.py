@@ -98,6 +98,11 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
 
     for page_num in range(len(doc)):
         page = doc[page_num]
+
+        # Save original page dimensions to restore later
+        original_mediabox = page.mediabox
+        original_cropbox = page.cropbox
+
         text_instances = page.search_for(search_text)
 
         if text_instances:
@@ -179,15 +184,16 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                     fontname=fontname
                 )
 
-    # Save to bytes with compatibility options for Preview
-    # expand=True flattens content for better Preview compatibility
+            # Restore original page dimensions (redaction can modify them)
+            page.set_mediabox(original_mediabox)
+            page.set_cropbox(original_cropbox)
+
+    # Save to bytes with minimal modifications to preserve layout
     output_bytes = doc.write(
         garbage=4,
         deflate=True,
-        clean=True,
-        pretty=False,
-        linear=False,
-        expand=True  # Flatten content for Preview compatibility
+        clean=False,  # Don't clean to preserve exact structure
+        pretty=True
     )
     doc.close()
 

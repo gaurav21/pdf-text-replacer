@@ -167,12 +167,14 @@ def replace_text_in_pdf(pdf_bytes, search_text, replace_text):
                 if text_width > old_width:
                     fontsize = fontsize * (old_width / text_width) * 0.95  # 95% to add small margin
 
-                # Draw background color rectangle
-                page.draw_rect(rect, color=bg_color, fill=bg_color)
+                # Draw background color rectangle WITHOUT border
+                # width=0 means no border/stroke, only fill
+                page.draw_rect(rect, color=bg_color, fill=bg_color, width=0)
 
                 # Insert new text at the same position
+                # Use the same baseline calculation as the original text
                 page.insert_text(
-                    (rect.x0, rect.y1 - 2),
+                    (rect.x0, rect.y1 - (rect.height * 0.15)),  # Better baseline alignment
                     replace_text,
                     fontsize=fontsize,
                     color=repl['color'],

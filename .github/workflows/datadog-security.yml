@@ -13,14 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Datadog Static Analysis
-        uses: DataDog/datadog-static-analyzer-github-action@v1
+        uses: DataDog/datadog-static-analyzer-github-action@v3
         with:
           dd_api_key: ${{ secrets.DD_API_KEY }}
           dd_app_key: ${{ secrets.DD_APP_KEY }}
           dd_site: datadoghq.com
           dd_service: ${{ github.event.repository.name }}
           dd_env: ci
-          cpu_count: 2
 
   datadog-sca:
     name: Datadog SCA
@@ -28,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Datadog SCA
-        uses: DataDog/datadog-sca-github-action@main
+        uses: DataDog/datadog-sca-github-action@v2
         with:
           dd_api_key: ${{ secrets.DD_API_KEY }}
           dd_app_key: ${{ secrets.DD_APP_KEY }}

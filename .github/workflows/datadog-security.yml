@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: DataDog/datadog-static-analyzer-github-action@v1
+      - name: Datadog Static Analysis
+        uses: DataDog/datadog-static-analyzer-github-action@v1
         with:
           dd_api_key: ${{ secrets.DD_API_KEY }}
           dd_app_key: ${{ secrets.DD_APP_KEY }}
@@ -26,7 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: DataDog/datadog-sca-github-action@v1
+      - name: Datadog SCA
+        uses: DataDog/datadog-sca-github-action@main
         with:
           dd_api_key: ${{ secrets.DD_API_KEY }}
           dd_app_key: ${{ secrets.DD_APP_KEY }}
